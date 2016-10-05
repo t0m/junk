@@ -1,0 +1,87 @@
+<!doctype>
+<html>
+<head>
+<title></title>
+<style>
+    body {
+        margin: 20px;
+        padding: 20px;
+        font-family: calibri, arial, sans-serif;
+    }
+    #canvas {
+        border: 1px solid grey;
+        box-sizing: border-box;
+    }
+</style>
+</head>
+<body>
+    <div>
+        <input type="file" id="fileInput"></input>
+    </div>
+    <canvas id="canvas"></canvas>
+</body>
+</html>
+
+<script>
+"use strict";
+
+function onFileDrop(event) {
+    var fileInput = this;
+    if (fileInput.files.length == 0) return;
+    console.assert(fileInput.files.length === 1);
+
+    var reader = new FileReader();
+
+    reader.onloadend = function(progress){
+        console.assert(this.readyState == FileReader.DONE);
+
+        var isLittleEndian = true; // TODO: test
+        var buffer = this.result;
+        var bytesRead = buffer.byteLength;
+
+        var bfType = new Uint8Array(buffer, 0, 2);
+        var bm = String.fromCharCode(bfType[0]) + String.fromCharCode(bfType[1]);
+        console.assert(bm == 'BM'); // wrong file type
+        var offsetBytes = new DataView(buffer, 10, 4).getUint32(0, isLittleEndian);
+        console.assert(offsetBytes == 54);
+        
+        var sizeofBitmapHeader = 14; // per msdn
+
+        var imageBytes      = new DataView(buffer, sizeofBitmapHeader, 4).getUint32(0, isLittleEndian);
+        var imageWidth      = new DataView(buffer, sizeofBitmapHeader + 4,  4).getUint32(0, isLittleEndian);
+        var imageHeight     = new DataView(buffer, sizeofBitmapHeader + 8,  4).getUint32(0, isLittleEndian);
+        var imageBitmapSize = new DataView(buffer, sizeofBitmapHeader + 20, 4).getUint32(0, isLittleEndian);
+        
+        var bytesWithoutPadding = imageWidth*imageHeight*4;
+        var bitmapData = new Uint8ClampedArray(buffer, offsetBytes, bytesWithoutPadding);
+        console.assert(imageBitmapSize - bitmapData.byteLength < 4);
+
+        var bitmap = createImageBitmap(new ImageData(bitmapData, imageWidth, imageHeight), 
+                                      {'imageOrientation': 'flipY',
+                                      'colorSpaceConversion': 'none'});
+
+        bitmap.then(function(imageBitmap) {
+            var canvas = document.getElementById('canvas');
+            canvas.width = imageWidth;
+            canvas.height = imageHeight;
+            var ctx = canvas.getContext('2d');
+
+            console.log(imageWidth, imageHeight);
+            ctx.drawImage(imageBitmap, 0, 0, imageWidth, imageHeight);
+        }, function(err) {
+            console.log("error");
+            console.log(err);
+            console.assert(false);
+        });
+    }
+
+    var fileBuf = reader.readAsArrayBuffer(fileInput.files[0]);
+
+}
+
+window.onload = function() {
+    var fileInput = document.getElementById('fileInput');
+    fileInput.onchange = onFileDrop;
+};
+
+</script>
