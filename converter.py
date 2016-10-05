@@ -1,3 +1,6 @@
+"""
+swaps the red and blue channels on a 32 bit bitmap with BITFIELDS compression
+"""
 import sys
 import os
 import struct
