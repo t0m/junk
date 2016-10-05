@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <title>omnimap</title>
+    <link rel="stylesheet" href="reset.css"/>
+    <link rel="stylesheet" href="omnimap.css"/>
+  </head>
+  <body>
+    <div class="header"></div>
+    <div class="container">
+      <div class="map-box google" id="googleMap">
+      </div>
+      <div class="map-box bing" id="bingMap">
+      </div>
+      <div class="map-box nokia" id="nokiaMap">
+      </div>
+      <div class="map-box mapquest" id="mapquestMap">
+      </div>
+    </div>
+  </body>
+</html>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script type="text/javascript" charset="UTF-8" src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCYYfFeAHByTOMrdlnP2JDLMwP7U4ZLO8c&sensor=true"></script>
+<script type="text/javascript" charset="UTF-8" src="https://ecn.dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=7.0&s=1"></script>
+<script type="text/javascript" charset="UTF-8" src="https://api.maps.nokia.com/2.2.3/jsl.js?with=all"></script>
+<script type="text/javascript" charset="UTF-8" src="http://www.mapquestapi.com/sdk/js/v7.0.s/mqa.toolkit.js?key=Fmjtd%7Cluuanu08l1%2C8a%3Do5-96bslf"></script> 
+<script type="text/javascript" charset="UTF-8" src="omnimap.js"></script> 
+<script type="text/javascript">
+
+  $(function() {
+    initGoogle();
+    initBing();
+    initNokia();
+    initMapquest();
+    startMonitor();
+  });
+
+</script>
