@@ -1,0 +1,3 @@
+{
+  "shell_cmd": "cft=`cat $file`; aws cloudformation validate-template --template-body \"\\$cft\""
+}
