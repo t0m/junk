@@ -1,0 +1,176 @@
+<!doctype html>
+<!-- POC for a non-annoying intro animation for a status dash -->
+<html>
+  <head>
+    <title>title</title>
+    <style type="text/css">
+      html, body {
+        margin: 0px;
+        padding: 0px;
+        height: 100%;
+        line-height:0px;
+      }
+      #canvas {
+        border:1px solid #ccc;
+        min-height:100%;
+        box-sizing: border-box;
+        margin:0px;
+        padding:0px;
+      }
+
+      .box {
+        border: 1px solid green;
+        background-color: #99ff99;
+        width: 50px;
+        height: 50px;
+        margin-right: 3px;
+        margin-top: 3px;
+        display:inline-block;
+      }
+      #controls {
+        position: absolute;
+        top: 20px;
+        margin-left: 50%;
+        z-index:9999;
+      }
+    </style>
+  </head>
+  <body id="body">
+    <div id="controls">
+      <button onclick="run(OPACITY)">Opacity</button>
+      <button onclick="run(ROTATE_X)">Rotate X</button>
+      <button onclick="run(ROTATE_Y)">Rotate Y</button>
+      <button onclick="run(ROTATE_360)">Rotate 360</button>
+      <button onclick="run(ROTATE_DIAGONAL)">Diagonal</button>
+    </div>
+  </body>
+</html>
+<script>
+"use strict";
+
+var NUM_CUBES = 512;
+var LAST_TICK = null;
+var CHILD_NODES = null;
+var ANIMATION_IDX = null;
+var BOX_STRIDE = null;
+var MAX_ROWS = null;
+
+/* 
+ * each style is an array of two functions: the first to set the initial
+ * state of the element (incl. transform animations) and the second to 
+ * set the desired state.
+ */
+
+var OPACITY = [
+  function(elem) { 
+    elem.style.opacity=0; 
+    elem.style.transition='opacity 0.2s'
+  },
+  function(elem) { elem.style.opacity=100; }
+];
+
+var ROTATE_X = [
+  function(elem) { 
+    elem.style.webkitTransform='rotateX(90deg)'; 
+    elem.style.transition='transform 0.2s';
+  },
+  function(elem) { elem.style.transform='rotateX(0)'; }
+];
+
+var ROTATE_Y = [
+  function(elem) { 
+    elem.style.transition='transform 0.2s';
+    elem.style.transform='rotateY(90deg)'; 
+  },
+  function(elem) { elem.style.transform='rotateY(0)'; }
+];
+
+
+var ROTATE_360 = [ // actually 270 
+  function(elem) { 
+    elem.style.transition='transform 0.3s';
+    elem.style.transform='rotateY(90deg)'; 
+  },
+  function(elem) { elem.style.transform='rotateY(360deg)'; }
+];
+
+var ROTATE_DIAGONAL = [
+  function(elem) { 
+    elem.style.transition='transform 0.2s';
+    elem.style.transform='rotateY(90deg) rotateX(90deg)'; 
+  },
+  function(elem) { 
+    elem.style.transform='rotateY(0deg) rotateX(0deg)'; 
+  }
+];
+
+
+
+function tick(timestamp, animationType) {
+  var delta;
+  if (ANIMATION_IDX === null) {
+    ANIMATION_IDX = 0;
+    // first tick, clear previous state, create all our boxes, and set up globals
+    delta = 0;
+    var canvas = document.getElementById('canvas');
+    if (canvas) {
+      canvas.parentNode.removeChild(canvas);
+    }
+
+    var initializer = animationType[0];
+    canvas = document.createElement('div');
+    canvas.id = 'canvas';
+    for (var i=0; i<NUM_CUBES; i++) {
+      var div = document.createElement('div');
+      div.className = 'box';
+      initializer(div);
+      canvas.appendChild(div);
+    }
+    document.getElementById('body').appendChild(canvas);
+    CHILD_NODES = canvas.childNodes;
+    var boxWidth = 50 + 5;
+    BOX_STRIDE = parseInt(canvas.clientWidth/boxWidth);
+    MAX_ROWS = parseInt(NUM_CUBES/BOX_STRIDE);
+
+  } else {
+    delta = timestamp - LAST_TICK;
+    var transform = animationType[1];
+
+    // go down the rightmost column
+    for (var r=0; r<=ANIMATION_IDX; r++) {
+      var rowIdx = ANIMATION_IDX + (r*BOX_STRIDE);
+      if (rowIdx < CHILD_NODES.length) {
+        transform(CHILD_NODES[rowIdx]);
+      }
+    }
+
+    // go across the bottom row
+    for (var c=0; c<ANIMATION_IDX; c++) {
+      var colIdx = ANIMATION_IDX*BOX_STRIDE + c;
+      if (colIdx < CHILD_NODES.length) {
+        transform(CHILD_NODES[colIdx]);
+      }
+    }
+    ANIMATION_IDX++;
+  }
+  LAST_TICK = timestamp;
+  
+  if (ANIMATION_IDX < (MAX_ROWS > BOX_STRIDE? MAX_ROWS : BOX_STRIDE)){
+    window.requestAnimationFrame(function(ts){ tick(ts, animationType) });
+  } else {
+    document.getElementById('controls').style.display='';
+  }
+}
+
+
+function run(animationType) {
+  document.getElementById('controls').style.display='none';
+  var partial = function(ts) { tick(ts, animationType) };
+  ANIMATION_IDX = null;
+  window.requestAnimationFrame(partial);
+}
+
+run(OPACITY);
+
+
+</script>
